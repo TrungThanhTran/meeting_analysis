@@ -1,5 +1,11 @@
 import streamlit as st
 from functions import *
+from PIL import Image
+
+# replace logo
+image_directory = "data/logo/logo.png"
+image_logo = Image.open(image_directory)
+st.set_page_config(page_title="Capturia",page_icon=image_logo)
 
 footer="""
             <style>
@@ -7,6 +13,8 @@ footer="""
             footer {visibility: hidden;}
             </style>
         """
+        
+        
 st.markdown(footer, unsafe_allow_html=True)
 
 st.sidebar.header("Summarization")
@@ -27,8 +35,11 @@ if st.session_state['passages']:
     with st.spinner("Summarizing and matching entities, this takes a few seconds..."):
         
         try:
-            text_to_summarize = chunk_and_preprocess_text(st.session_state['passages'])
-            summarized_text = summarize_text(text_to_summarize,max_len=max_len,min_len=min_len)
+            if len(st.session_state['passages']) < min_len:
+                summarized_text = st.session_state['passages']
+            else:
+                text_to_summarize = chunk_and_preprocess_text(st.session_state['passages'])
+                summarized_text = summarize_text(text_to_summarize,max_len=max_len,min_len=min_len)
             
         
         except IndexError:

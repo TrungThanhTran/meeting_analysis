@@ -1,5 +1,11 @@
 import streamlit as st
 from functions import *
+from PIL import Image
+
+# replace logo
+image_directory = "data/logo/logo.png"
+image_logo = Image.open(image_directory)
+st.set_page_config(page_title="Capturia",page_icon=image_logo)
 
 # st.set_page_config(page_title="Question/Answering", page_icon="🔎")
 st.sidebar.header("Semantic Search")

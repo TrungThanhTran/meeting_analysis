@@ -22,6 +22,8 @@ import wikipedia
 from pyvis.network import Network
 import torch
 from pydub import AudioSegment
+from transformers import AutoFeatureExtractor, AutoModelForAudioXVector
+
 
 from langchain.docstore.document import Document
 from langchain.embeddings import HuggingFaceEmbeddings,HuggingFaceInstructEmbeddings
@@ -123,6 +125,13 @@ def load_asr_model(asr_model_name):
     asr_model = whisper.load_model(asr_model_name)
     
     return asr_model
+
+@st.experimental_singleton(suppress_st_warning=True)
+def load_si_model(si_model_name):
+    feature_extractor = AutoFeatureExtractor.from_pretrained(si_model_name)
+    model = AutoModelForAudioXVector.from_pretrained(si_model_name)
+    return model, feature_extractor
+    
 
 @st.experimental_singleton(suppress_st_warning=True)
 def process_corpus(corpus, _tokenizer, title, embedding_model, chunk_size=200, overlap=50):

@@ -3,6 +3,12 @@ from pyvis.network import Network
 from functions import *
 import streamlit.components.v1 as components
 import pickle, math
+from PIL import Image
+
+# replace logo
+image_directory = "data/logo/logo.png"
+image_logo = Image.open(image_directory)
+st.set_page_config(page_title="Capturia",page_icon=image_logo)
 
 footer="""
             <style>

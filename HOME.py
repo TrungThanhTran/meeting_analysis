@@ -14,6 +14,10 @@ from PIL import Image
 from functions import *
 from st_custom_components import st_audiorec
 # import streamlit.components.v1 as components
+# replace logo
+image_directory = "data/logo/logo.png"
+image_logo = Image.open(image_directory)
+st.set_page_config(page_title="Capturia",page_icon=image_logo)
 
 nltk.download('punkt')
 
@@ -28,9 +32,7 @@ footer="""
 st.markdown(footer, unsafe_allow_html=True)
 
 st.sidebar.header("Home")
-
 asr_model_options = ['small.en', 'base.en','tiny.en']
-    
 asr_model_name = st.sidebar.selectbox("Whisper Model Options", options=asr_model_options, key='sbox')
 
 col1, col2 = st.columns(2)
@@ -56,8 +58,10 @@ if "sen_df" not in st.session_state:
     st.session_state['sen_df'] = ''
 
 def clean_directory(path):
-    for file in os.listdir(path):
-        os.remove(os.path.join(path, file))
+    if not os.path.exists(path):
+        for file in os.listdir(path):
+            os.remove(os.path.join(path, file))
+        
 clean_directory("./temp")
 
 
@@ -71,14 +75,15 @@ except Exception as e:
     
 def infer_audio(state, asr_model, type):
     results, title = inference(state, asr_model, type)
+    print('results = ', results)
     # passages = results
     passages = clean_text(results)
         
     st.session_state['passages'] = passages
     st.session_state['title'] = title
 
-st.markdown("## Give us audio",  unsafe_allow_html=True)
-st.write(st.session_state)
+st.markdown("## Please submit your audio or video file",  unsafe_allow_html=True)
+# st.write(st.session_state)
 
 ### UPLOAD AND PROCESS
 choice = st.radio("", ["By uploading a file","By getting from Youtube URL"]) 

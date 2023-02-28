@@ -6,6 +6,12 @@ from functions import *
 from optimum.onnxruntime import ORTModelForSequenceClassification
 import validators
 import textwrap
+from PIL import Image
+
+# replace logo
+image_directory = "data/logo/logo.png"
+image_logo = Image.open(image_directory)
+st.set_page_config(page_title="Capturia",page_icon=image_logo)
 
 footer="""
             <style>
