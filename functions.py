@@ -23,6 +23,9 @@ from pyvis.network import Network
 import torch
 from pydub import AudioSegment
 from transformers import AutoFeatureExtractor, AutoModelForAudioXVector
+import subprocess
+from moviepy.editor import *
+from glob import glob
 
 
 from langchain.docstore.document import Document
@@ -235,48 +238,48 @@ def embed_text(query,title,embedding_model,_emb_tok,_docsearch,chain_type):
 def get_spacy():
     nlp = en_core_web_lg.load()
     return nlp
-    
-# Function to save uploaded file
-def save_uploadedfile(filename, uploadedfile):
-    with open(os.path.join("./temp/",filename),"wb") as f:
-         f.write(uploadedfile.getbuffer())
+             
+def MP4ToMP3(path_to_mp4, path_to_mp3):
+    FILETOCONVERT = AudioFileClip(path_to_mp4)
+    FILETOCONVERT.write_audiofile(path_to_mp3)
+    FILETOCONVERT.close()
 
+def download_from_youtube(url):
+    yt = YouTube(url)
+    yt.streams \
+    .filter(progressive=True, file_extension='mp4') \
+    .order_by('resolution') \
+    .desc() \
+    .first() \
+    .download("temp/youtube")
+
+    video_file_path = glob("temp/youtube/*.mp4")[0]
+    audio_file_path = "temp/youtube/yt_audio.mp3"
+    MP4ToMP3(video_file_path, audio_file_path)
+    return audio_file_path, yt.title
+    
 # @st.experimental_memo(suppress_st_warning=True)
 def inference(state, _asr_model, type):
     '''Convert Youtube video or Audio upload to text'''
+    print('type = ', type)
     if type == 'upload':
         # TODO: remove
         print('upload handling...')
         #Orgin commend for CUDA "options = whisper.DecodingOptions()"
         results = _asr_model.transcribe("./temp/audio.mp3")
-        print(results)
-        # # load audio and pad/trim it to fit 30 seconds
-        # audio = whisper.load_audio("audio.mp3")
-        # audio = whisper.pad_or_trim(audio)
 
-        # # make log-Mel spectrogram and move to the same device as the model
-        # mel = whisper.log_mel_spectrogram(audio).to(model.device)
-
-        # # detect the spoken language
-        # _, probs = model.detect_language(mel)
-        # print(f"Detected language: {max(probs, key=probs.get)}")
-
-        # # decode the audio
-        # options = whisper.DecodingOptions()
-        # result = whisper.decode(model, mel, options)
-
-        # results = _asr_model.transcribe(state, task='transcribe', language='en')
         return results['text'], "Transcribed Audio"
 
     elif type == 'url':
         if validators.url(state):
-            yt = YouTube(state)
-            title = yt.title
-            path = yt.streams.filter(only_audio=True)[0].download(filename="audio.mp4")
-            results = _asr_model.transcribe(path, task='transcribe', language='en')
+            with st.spinner("Extract audio from video..."):
+                url_file_mp3, title = download_from_youtube(state)
+                st.success("Audio extraction done!")
+            if os.path.exists(url_file_mp3):
+                results = _asr_model.transcribe(url_file_mp3, task='transcribe', language='en')
         else:
-            return "no URL existed!"
-        return results['text'], yt.title
+            return "no URL existed!", "No audio found"
+        return results['text'], title
  
       
 @st.experimental_memo(suppress_st_warning=True)

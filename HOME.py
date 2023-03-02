@@ -51,19 +51,18 @@ print('state = ', st.session_state)
 ### prepare state for 
 if 'sbox' not in st.session_state:
     st.session_state.sbox = asr_model_name
-if "passages" not in st.session_state:
-    st.session_state["passages"] = ''
-    
+
 if "sen_df" not in st.session_state:
     st.session_state['sen_df'] = ''
 
-def clean_directory(path):
-    if not os.path.exists(path):
-        for file in os.listdir(path):
-            os.remove(os.path.join(path, file))
-        
-clean_directory("./temp")
-
+def clean_directory(paths):
+    for path in paths:
+        if not os.path.exists(path):
+            pass
+        else:
+            for file in os.listdir(path):
+                if ("mp3" in file) or ("mp4" in file):
+                    os.remove(os.path.join(path, file))
 
 ### Preload model
 try:
@@ -83,13 +82,11 @@ def infer_audio(state, asr_model, type):
     st.session_state['title'] = title
 
 st.markdown("## Please submit your audio or video file",  unsafe_allow_html=True)
-# st.write(st.session_state)
 
 ### UPLOAD AND PROCESS
 choice = st.radio("", ["By uploading a file","By getting from Youtube URL"]) 
 if choice:
-    # if choice == "By starting record":
-    #     record = audiorecorder("Click to record", "Recording...")
+    clean_directory(["./temp", "./temp/youtube"])
     if choice == "By uploading a file":
         upload_wav = st.file_uploader("Upload a .wav sound file ",key="upload")
         if upload_wav:
@@ -101,37 +98,28 @@ if choice:
         url_input = st.text_input(
         label="Enter YouTube URL, below is a calling example", value='https://www.youtube.com/watch?v=agizP0kcPjQ',
         key="url")
-        if 'update' in st.session_state:
-            st.session_state['update'] = ''
-    
-    # elif choice == "By recording":
-    #     wav_audio_data = st_audiorec()
-    #     if wav_audio_data:
-    #         st.audio(wav_audio_data, format="audio/wav")
-    #         wav_file = open("./temp/record.mp3", "wb")
-    #         wav_file.write(wav_audio_data.tobytes())
-    #         wav_file.close()
+        if 'upload' in st.session_state:
+            st.session_state['upload'] = ''
         
     btn_transcribe = st.button('Transcribe')
     if btn_transcribe:
-        with st.spinner(text="In progress..."):
+        if 'passage' in st.session_state:
+            st.session_state['passage'] = ""
+            
+        with st.spinner(text="Transcribing..."):
             try:
-                if "url" in st.session_state:
+                if ('url' in st.session_state) and (st.session_state['url'] != ''):
                     if len(st.session_state['url']) > 0: 
                         infer_audio(st.session_state['url'], ASR_MODEL, type='url') 
 
-                if "upload" in st.session_state:  
+                if ('upload' in st.session_state) and (st.session_state['upload'] != ''):  
                     if st.session_state['upload'] is not None:
-                        print('using this function') 
                         infer_audio(st.session_state['upload'], ASR_MODEL, type='upload')
                 
-                # if "record" in st.session_state:
-                #     if st.session_state['record'] is not None:
-                #         ./temp/record.mp3
             except Exception as e:
                 print(e)
                 st.write("No YouTube URL or file upload detected")
-        st.success('Processing audio done!')
+        st.success('Transcribing audio done!')
     
 # if "url" not in st.session_state:
 #     st.session_state.url = "https://www.youtube.com/watch?v=agizP0kcPjQ"
